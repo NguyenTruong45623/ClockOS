@@ -1,0 +1,47 @@
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Local configuration
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+
+# Specific IDEA files (nếu không ignore toàn bộ .idea)
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/vcs.xml
+.idea/appInsightsSettings.xml
+.idea/AndroidProjectSystem.xml
+
+# Native build
+.externalNativeBuild/
+.cxx/
+
+# Captures
+captures/
+
+# MacOS
+.DS_Store
+
+# Keystore
+*.jks
+*.keystore
+
+# Logs
+*.log
+
+# Generated files
+bin/
+gen/
+out/
+
+# Kotlin
+.kotlin/
