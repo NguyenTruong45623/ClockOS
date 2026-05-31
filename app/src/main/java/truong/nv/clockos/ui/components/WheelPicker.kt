@@ -16,6 +16,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
@@ -58,4 +60,21 @@ fun WheelPicker(items: List<Int>, label: String, onItemSelected: (Int) -> Unit) 
         Spacer(modifier = Modifier.width(6.dp))
         Text(text = label, color = MaterialTheme.colorScheme.onBackground, fontSize = 16.sp, modifier = Modifier.width(40.dp))
     }
+}
+
+
+@Preview(
+    name = "Pixel 9",
+    device = "id:pixel_9",
+    showBackground = true,
+    backgroundColor = 0xFFFFFFFF,
+    showSystemUi = true
+)
+@Composable
+fun WheelPickerPreview() {
+    WheelPicker(
+        items = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+        label = "Giờ",
+        onItemSelected = {}
+    )
 }

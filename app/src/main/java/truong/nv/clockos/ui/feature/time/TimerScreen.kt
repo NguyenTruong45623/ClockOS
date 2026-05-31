@@ -38,6 +38,7 @@ import truong.nv.clockos.data.models.TimerItem
 import truong.nv.clockos.helper.formatSecondsToTimeString
 import truong.nv.clockos.ui.components.ControlButton
 import truong.nv.clockos.ui.components.ProgressRing
+import truong.nv.clockos.ui.components.SwipeableTimerRowItem
 import truong.nv.clockos.ui.components.WheelPicker
 import truong.nv.clockos.ui.navigation.AppNavigator
 import truong.nv.clockos.ui.theme.IosColor
@@ -129,11 +130,12 @@ fun TimerListScreen(
                 .padding(horizontal = 16.dp)
         ) {
             items(activeTimers, key = { it.id }) { timer ->
-                TimerRowItem(
+                SwipeableTimerRowItem(
                     timer = timer,
                     showProgressRing = true,
                     onClick = { onItemClick(timer) },
-                    onToggle = { onToggleItem(timer) }
+                    onToggle = { onToggleItem(timer) },
+                    onDelete = {}
                 )
                 HorizontalDivider(color = Color.White.copy(alpha = 0.08f), thickness = 0.5.dp)
             }
@@ -145,11 +147,12 @@ fun TimerListScreen(
             }
 
             items(recentTimers, key = { it.id }) { timer ->
-                TimerRowItem(
+                SwipeableTimerRowItem(
                     timer = timer,
                     showProgressRing = false,
                     onClick = {},
-                    onToggle = { onToggleItem(timer) }
+                    onToggle = { onToggleItem(timer) },
+                    onDelete = {}
                 )
                 HorizontalDivider(color = Color.White.copy(alpha = 0.08f), thickness = 0.5.dp)
             }
