@@ -10,10 +10,10 @@ data class TimerUiState(
     val targetTimeString: String = "00:00"
 )
 
-sealed interface TimerUiEvent {
-    data object ClickAddButton : TimerUiEvent
-    data object ClickBackButton : TimerUiEvent
-    data class StartNewTimer(val hours: Int, val minutes: Int, val seconds: Int) : TimerUiEvent
-    data class ToggleTimer(val timerId: String) : TimerUiEvent
-    data class CancelTimer(val timerId: String) : TimerUiEvent
+sealed class TimerUiEvent {
+    data object ClickAddButton : TimerUiEvent()
+    data object ClickBackButton : TimerUiEvent()
+    data class StartNewTimer(val hours: Int, val minutes: Int, val seconds: Int) : TimerUiEvent()
+    data class ToggleTimer(val timerId: String) : TimerUiEvent()
+    data class CancelTimer(val timerId: String) : TimerUiEvent()
 }

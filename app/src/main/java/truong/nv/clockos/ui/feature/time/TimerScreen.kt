@@ -1,5 +1,6 @@
 package truong.nv.clockos.ui.feature.time
 
+import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -31,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -43,6 +45,16 @@ import truong.nv.clockos.ui.components.WheelPicker
 import truong.nv.clockos.ui.navigation.AppNavigator
 import truong.nv.clockos.ui.theme.IosColor
 
+// ==========================================
+// ĐỊNH NGHĨA ANNOTATION PREVIEW CHUNG
+// ==========================================
+@Preview(name = "Light Mode", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_NO)
+@Preview(name = "Dark Mode", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
+annotation class ThemePreviews
+
+// ==========================================
+// MÀN HÌNH CHÍNH
+// ==========================================
 @Composable
 fun TimerScreen(
     navigator: AppNavigator,
@@ -443,6 +455,79 @@ fun TimerSettingRow(title: String, value: String, highlightValue: Boolean = fals
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                 modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+// ==========================================
+// PREVIEWS
+// ==========================================
+
+@ThemePreviews
+@Composable
+fun PreviewTimerListScreen() {
+    MaterialTheme {
+        TimerListScreen(
+            activeTimers = listOf(
+                TimerItem(id = "1", label = "Luộc trứng", totalSeconds = 600, remainingSeconds = 450, isRunning = true),
+                TimerItem(id = "2", label = "Đọc sách", totalSeconds = 1800, remainingSeconds = 1800, isRunning = false)
+            ),
+            recentTimers = listOf(
+                TimerItem(id = "3", label = "Tập thể dục", totalSeconds = 3600, remainingSeconds = 0, isRunning = false),
+                TimerItem(id = "4", label = "Nấu cơm", totalSeconds = 2700, remainingSeconds = 0, isRunning = false)
+            ),
+            onAddClick = {},
+            onItemClick = {},
+            onToggleItem = {}
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun PreviewTimerSetupScreen() {
+    MaterialTheme {
+        TimerSetupScreen(
+            onBackClick = {},
+            onStartClick = { _, _, _ -> },
+            onToneRowClick = {},
+            selectedToneName = "Hướng tâm (Mặc định)"
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun PreviewTimerActiveScreen() {
+    MaterialTheme {
+        TimerActiveScreen(
+            remainingSeconds = 250,
+            totalSeconds = 600,
+            targetTimeString = "10:30",
+            isRunning = true,
+            onBackClick = {},
+            onCancelClick = {},
+            onToggleClick = {}
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun PreviewTimerSettingRow() {
+    MaterialTheme {
+        Column {
+            TimerSettingRow(
+                title = "Nhãn",
+                value = "Hẹn giờ",
+                onClick = {}
+            )
+            TimerSettingRow(
+                title = "Khi hẹn giờ kết thúc",
+                value = "Hướng tâm",
+                highlightValue = true,
+                onClick = {}
             )
         }
     }
