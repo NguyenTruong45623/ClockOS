@@ -48,6 +48,7 @@ class TimerService : Service() {
     private var totalTimeInMillis = 0L
     private var endTime = 0L
     private var isRunning = false
+    private var ringtone: android.media.Ringtone? = null
 
     private val serviceScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private var tickerJob: Job? = null
@@ -119,6 +120,9 @@ class TimerService : Service() {
 
                 // Dừng ticker
                 tickerJob?.cancel()
+
+                // Dừng nhạc và rung (nếu đang kêu)
+                stopAlarmSoundAndVibration()
 
                 // Reset state
                 isRunning = false
@@ -216,8 +220,29 @@ class TimerService : Service() {
         try {
             val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                 ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            val ringtone = RingtoneManager.getRingtone(this, alarmUri)
+            ringtone = RingtoneManager.getRingtone(this, alarmUri)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                ringtone?.isLooping = true
+            }
             ringtone?.play()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun stopAlarmSoundAndVibration() {
+        try {
+            ringtone?.stop()
+            ringtone = null
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                vibratorManager.defaultVibrator.cancel()
+            } else {
+                @Suppress("DEPRECATION")
+                val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                vibrator.cancel()
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -244,6 +269,7 @@ class TimerService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        stopAlarmSoundAndVibration()
         tickerJob?.cancel()
         serviceScope.cancel()
     }
