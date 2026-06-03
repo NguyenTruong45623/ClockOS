@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import truong.nv.clockos.ui.feature.alarm.AlarmScreen
 import truong.nv.clockos.ui.feature.stopTime.StopTimeScreen
+import truong.nv.clockos.ui.feature.stopTime.StopWatchScreen
 import truong.nv.clockos.ui.feature.time.TimerScreen
 import truong.nv.clockos.ui.feature.worldClock.WorldClockScreen
 
@@ -87,7 +88,7 @@ fun MainScreen(
             when (currentTab) {
                 MainTab.WorldClock -> WorldClockScreen(navigator)
                 MainTab.Alarm -> AlarmScreen(navigator)
-                MainTab.StopTime -> StopTimeScreen(navigator)
+                MainTab.StopTime -> StopWatchScreen(navigator)
                 MainTab.Time -> TimerScreen(navigator)
             }
         }

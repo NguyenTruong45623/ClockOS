@@ -1,4 +1,4 @@
-package truong.nv.clockos.helper
+package truong.nv.clockos.di.helper
 
 import android.app.AlarmManager
 import android.app.PendingIntent

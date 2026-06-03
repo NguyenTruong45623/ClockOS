@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import truong.nv.clockos.data.dao.TimerDao
 import truong.nv.clockos.data.models.TimerItem
 import java.util.Calendar
 import java.util.Locale
@@ -22,13 +23,20 @@ enum class TimerNavigationState {
 }
 
 @HiltViewModel
-class TimerViewModel @Inject constructor() : ViewModel() {
+class TimerViewModel @Inject constructor(
+    private val repository: TimerDao
+) : ViewModel() {
     private val _uiState = MutableStateFlow(TimerUiState())
     val uiState: StateFlow<TimerUiState> = _uiState.asStateFlow()
 
     private var tickerJob: Job? = null
 
     init {
+        viewModelScope.launch {
+            repository.getTimers().collect { items ->
+
+            }
+        }
         // Cài đặt dữ liệu mẫu ban đầu (Mock Data)
         _uiState.update {
             it.copy(

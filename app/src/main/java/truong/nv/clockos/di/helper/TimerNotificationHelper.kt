@@ -1,5 +1,6 @@
-package truong.nv.clockos.helper
+package truong.nv.clockos.di.helper
 
+import android.R
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -46,7 +47,7 @@ object TimerNotificationHelper {
         )
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setSmallIcon(R.drawable.ic_lock_idle_alarm)
             .setOnlyAlertOnce(true)
             .setOngoing(true)
             .setContentIntent(tapPending)
@@ -63,7 +64,7 @@ object TimerNotificationHelper {
                     .setUsesChronometer(false)
                     .setCategory(NotificationCompat.CATEGORY_ALARM)
                     .setPriority(NotificationCompat.PRIORITY_HIGH)
-                    .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Tắt", cancelPending)
+                    .addAction(R.drawable.ic_menu_close_clear_cancel, "Tắt", cancelPending)
             }
 
             // ========== ĐANG CHẠY ==========
@@ -76,8 +77,8 @@ object TimerNotificationHelper {
                     .setUsesChronometer(true)
                     .setWhen(endTime)
                     .setShowWhen(true)
-                    .addAction(android.R.drawable.ic_media_pause, "Tạm dừng", pausePending)
-                    .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Hủy", cancelPending)
+                    .addAction(R.drawable.ic_media_pause, "Tạm dừng", pausePending)
+                    .addAction(R.drawable.ic_menu_close_clear_cancel, "Hủy", cancelPending)
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     builder.setChronometerCountDown(true)
@@ -93,8 +94,8 @@ object TimerNotificationHelper {
                     .setUsesChronometer(false)
                     .setShowWhen(false)
                     .setContentText(formatTime(timeLeftInMillis))
-                    .addAction(android.R.drawable.ic_media_play, "Tiếp tục", resumePending)
-                    .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Hủy", cancelPending)
+                    .addAction(R.drawable.ic_media_play, "Tiếp tục", resumePending)
+                    .addAction(R.drawable.ic_menu_close_clear_cancel, "Hủy", cancelPending)
             }
         }
 

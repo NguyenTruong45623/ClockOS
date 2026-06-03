@@ -16,8 +16,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import truong.nv.clockos.helper.AlarmHelper
-import truong.nv.clockos.helper.TimerNotificationHelper
+import truong.nv.clockos.di.helper.AlarmHelper
+import truong.nv.clockos.di.helper.TimerNotificationHelper
 
 /**
  * Trạng thái của bộ đếm ngược, dùng để UI observe.

@@ -8,8 +8,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import truong.nv.clockos.data.AppDataBase
+import truong.nv.clockos.data.dao.StopWatchDao
+import truong.nv.clockos.data.dao.TimerDao
 import javax.inject.Singleton
-import kotlin.jvm.java
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -28,6 +29,17 @@ object AppModule {
     }
 
     @Provides
-    @Singleton
-    fun provideTimerDao(appDataBase: AppDataBase) = appDataBase.timerDao()
+    fun provideTimerDao(
+        appDataBase: AppDataBase
+    ): TimerDao {
+        return appDataBase.timerDao()
+    }
+
+    @Provides
+    fun provideStopWatchDao(
+        appDataBase: AppDataBase
+    ): StopWatchDao {
+        return appDataBase.stopWatchDao()
+    }
+
 }

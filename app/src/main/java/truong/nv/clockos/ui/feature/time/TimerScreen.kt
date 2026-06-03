@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import truong.nv.clockos.data.models.TimerItem
-import truong.nv.clockos.helper.formatSecondsToTimeString
+import truong.nv.clockos.di.helper.formatSecondsToTimeString
 import truong.nv.clockos.ui.components.ControlButton
 import truong.nv.clockos.ui.components.ProgressRing
 import truong.nv.clockos.ui.components.SwipeableTimerRowItem
