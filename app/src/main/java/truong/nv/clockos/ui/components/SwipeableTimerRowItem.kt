@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import truong.nv.clockos.data.models.TimerItem
-import truong.nv.clockos.di.helper.formatSecondsToTimeString
+import truong.nv.clockos.helper.formatSecondsToTimeString
 import truong.nv.clockos.ui.theme.IosColor
 import kotlin.math.roundToInt
 

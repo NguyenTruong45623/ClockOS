@@ -1,4 +1,4 @@
-package truong.nv.clockos.di.helper
+package truong.nv.clockos.helper
 import java.util.Locale
 
 fun formatSecondsToTimeString(totalSeconds: Long): String {

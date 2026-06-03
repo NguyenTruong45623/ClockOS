@@ -1,4 +1,4 @@
-package truong.nv.clockos.di.helper
+package truong.nv.clockos.helper
 
 import android.R
 import android.app.Notification

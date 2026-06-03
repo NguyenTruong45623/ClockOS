@@ -5,7 +5,7 @@ import truong.nv.clockos.data.models.TimerItem
 data class TimerUiState(
     val currentScreen: TimerNavigationState = TimerNavigationState.LIST,
     val timerList: List<TimerItem> = emptyList(),
-    val recentList: List<TimerItem> = emptyList(),
+    val activeTimerList: List<TimerItem> = emptyList(),
     val selectedTimer: TimerItem? = null,
     val targetTimeString: String = "00:00"
 )
