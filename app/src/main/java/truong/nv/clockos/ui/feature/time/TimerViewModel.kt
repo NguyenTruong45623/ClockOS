@@ -2,13 +2,13 @@ package truong.nv.clockos.ui.feature.time
 
 import android.app.Application
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asFlow
 import androidx.lifecycle.viewModelScope
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.workDataOf
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,7 +36,6 @@ class TimerViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(TimerUiState())
     val uiState: StateFlow<TimerUiState> = _uiState.asStateFlow()
 
-    private var tickerJob: Job? = null
     private val workManager = WorkManager.getInstance(application)
 
     init {
@@ -58,7 +57,6 @@ class TimerViewModel @Inject constructor(
                 )
             )
         }
-        startTicker()
     }
 
     // Hàm duy nhất nhận Event từ giao diện gửi lên
@@ -78,37 +76,6 @@ class TimerViewModel @Inject constructor(
             }
             is TimerUiEvent.CancelTimer -> {
                 cancelTimerItem(event.timerId)
-            }
-        }
-    }
-
-    private fun startTicker() {
-        tickerJob?.cancel()
-        tickerJob = viewModelScope.launch {
-            while (true) {
-                delay(1000L)
-                _uiState.update { state ->
-                    val updatedList = state.timerList.map { item ->
-                        if (item.isRunning && item.remainingSeconds > 0) {
-                            item.copy(remainingSeconds = item.remainingSeconds - 1)
-                        } else if (item.isRunning && item.remainingSeconds <= 0) {
-                            // Timer hết giờ — dừng lại
-                            item.copy(isRunning = false, remainingSeconds = 0)
-                        } else {
-                            item
-                        }
-                    }
-
-                    // Đồng bộ hóa với item đang mở ở màn hình lớn nếu có
-                    val updatedSelected = state.selectedTimer?.let { active ->
-                        updatedList.find { it.id == active.id }
-                    }
-
-                    state.copy(
-                        timerList = updatedList,
-                        selectedTimer = updatedSelected
-                    )
-                }
             }
         }
     }
@@ -139,6 +106,7 @@ class TimerViewModel @Inject constructor(
 
         // Schedule WorkManager để gửi notification khi hết giờ
         scheduleTimerWork(newTimer.id, label, total)
+        observeWorkStatus(newTimer.id)
     }
 
     private fun toggleTimerStatus(id: String) {
@@ -154,13 +122,12 @@ class TimerViewModel @Inject constructor(
             val timerItem = state.timerList.find { it.id == id }
             timerItem?.let { item ->
                 if (item.isRunning) {
-                    // Đang chạy → pause → cancel work
                     cancelTimerWork(id)
                 } else {
-                    // Đang pause → resume → schedule lại work với thời gian còn lại
                     val remaining = item.remainingSeconds
                     if (remaining > 0) {
                         scheduleTimerWork(id, item.label, remaining)
+                        observeWorkStatus(id)
                     }
                 }
             }
@@ -170,7 +137,6 @@ class TimerViewModel @Inject constructor(
     }
 
     private fun cancelTimerItem(id: String) {
-        // Cancel WorkManager work
         cancelTimerWork(id)
 
         _uiState.update { state ->
@@ -182,22 +148,53 @@ class TimerViewModel @Inject constructor(
         }
     }
 
+    private fun observeWorkStatus(timerId: String) {
+        viewModelScope.launch {
+            workManager.getWorkInfosByTagFlow(TimerCountdownWorker.WORK_NAME_PREFIX + timerId)
+                .collect { workInfos ->
+                    val workInfo = workInfos.firstOrNull() ?: return@collect
+                    
+                    _uiState.update { state ->
+                        var updatedList = state.timerList
+                        var updatedSelected = state.selectedTimer
+
+                        if (workInfo.state == WorkInfo.State.RUNNING) {
+                            val remaining = workInfo.progress.getLong(TimerCountdownWorker.KEY_REMAINING_SECONDS, -1L)
+                            if (remaining >= 0) {
+                                updatedList = updatedList.map {
+                                    if (it.id == timerId) it.copy(isRunning = true, remainingSeconds = remaining) else it
+                                }
+                                if (updatedSelected?.id == timerId) {
+                                    updatedSelected = updatedSelected.copy(isRunning = true, remainingSeconds = remaining)
+                                }
+                            }
+                        } else if (workInfo.state == WorkInfo.State.SUCCEEDED || workInfo.state == WorkInfo.State.FAILED) {
+                            updatedList = updatedList.map {
+                                if (it.id == timerId) it.copy(isRunning = false, remainingSeconds = 0) else it
+                            }
+                            if (updatedSelected?.id == timerId) {
+                                updatedSelected = updatedSelected.copy(isRunning = false, remainingSeconds = 0)
+                            }
+                        }
+
+                        state.copy(timerList = updatedList, selectedTimer = updatedSelected)
+                    }
+                }
+        }
+    }
+
     // =============================================
     // WORKMANAGER INTEGRATION
     // =============================================
 
-    /**
-     * Schedule 1 OneTimeWorkRequest với initialDelay = delaySeconds.
-     * Khi hết delay → Worker chạy → gửi Notification + âm thanh + rung.
-     */
     private fun scheduleTimerWork(timerId: String, label: String, delaySeconds: Long) {
         val workData = workDataOf(
             TimerCountdownWorker.KEY_TIMER_ID to timerId,
-            TimerCountdownWorker.KEY_TIMER_LABEL to label
+            TimerCountdownWorker.KEY_TIMER_LABEL to label,
+            TimerCountdownWorker.KEY_TOTAL_SECONDS to delaySeconds
         )
 
         val workRequest = OneTimeWorkRequestBuilder<TimerCountdownWorker>()
-            .setInitialDelay(delaySeconds, TimeUnit.SECONDS)
             .setInputData(workData)
             .addTag(TimerCountdownWorker.WORK_NAME_PREFIX + timerId)
             .build()
@@ -205,9 +202,6 @@ class TimerViewModel @Inject constructor(
         workManager.enqueue(workRequest)
     }
 
-    /**
-     * Cancel work theo tag (unique per timer).
-     */
     private fun cancelTimerWork(timerId: String) {
         workManager.cancelAllWorkByTag(TimerCountdownWorker.WORK_NAME_PREFIX + timerId)
     }

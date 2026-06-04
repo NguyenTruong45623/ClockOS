@@ -36,6 +36,7 @@
         </service>
 
         <receiver android:name=".receiver.TimerReceiver" android:exported="false" />
+        <receiver android:name=".receiver.StopAlarmReceiver" android:exported="false" />
 
         <activity
             android:name=".MainActivity"
@@ -59,6 +60,16 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
+        <!-- Khai báo đè SystemForegroundService của WorkManager để thêm property cho specialUse -->
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="specialUse"
+            tools:node="merge">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Chạy đồng hồ đếm ngược dưới nền" />
+        </service>
+
     </application>
 
 </manifest>

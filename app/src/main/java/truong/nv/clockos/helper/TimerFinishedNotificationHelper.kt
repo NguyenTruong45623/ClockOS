@@ -61,6 +61,18 @@ object TimerFinishedNotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        // Action "Tắt" để dừng chuông
+        val stopIntent = Intent(context, truong.nv.clockos.receiver.StopAlarmReceiver::class.java).apply {
+            action = "ACTION_STOP_ALARM"
+            putExtra("TIMER_ID", timerId)
+        }
+        val stopPending = PendingIntent.getBroadcast(
+            context,
+            timerId.hashCode() + 1,
+            stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("⏰ Hết giờ!")
@@ -69,6 +81,7 @@ object TimerFinishedNotificationHelper {
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
             .setContentIntent(tapPending)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "TẮT", stopPending)
             .setDefaults(NotificationCompat.DEFAULT_LIGHTS)
             .build()
 
@@ -76,6 +89,8 @@ object TimerFinishedNotificationHelper {
         val notificationId = BASE_NOTIFICATION_ID + (timerId.hashCode() and 0x7FFFFFFF) % 1000
         manager.notify(notificationId, notification)
     }
+
+    private var activeRingtone: android.media.Ringtone? = null
 
     /**
      * Rung thiết bị khi timer kết thúc.
@@ -86,13 +101,13 @@ object TimerFinishedNotificationHelper {
                 context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
             val vibrator = vibratorManager.defaultVibrator
             vibrator.vibrate(
-                VibrationEffect.createWaveform(longArrayOf(0, 500, 200, 500, 200, 500), -1)
+                VibrationEffect.createWaveform(longArrayOf(0, 500, 200, 500, 200, 500), 1) // 1 để lặp lại
             )
         } else {
             @Suppress("DEPRECATION")
             val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
             vibrator.vibrate(
-                VibrationEffect.createWaveform(longArrayOf(0, 500, 200, 500, 200, 500), -1)
+                longArrayOf(0, 500, 200, 500, 200, 500), 1 // 1 để lặp lại
             )
         }
     }
@@ -104,10 +119,89 @@ object TimerFinishedNotificationHelper {
         try {
             val alarmUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                 ?: RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-            val ringtone = RingtoneManager.getRingtone(context, alarmUri)
-            ringtone?.play()
+            activeRingtone?.stop()
+            activeRingtone = RingtoneManager.getRingtone(context, alarmUri)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                activeRingtone?.isLooping = true
+            }
+            activeRingtone?.play()
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    /**
+     * Tắt chuông và rung.
+     */
+    fun stopAlarmSoundAndVibration(context: Context) {
+        try {
+            activeRingtone?.stop()
+            activeRingtone = null
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                vibratorManager.defaultVibrator.cancel()
+            } else {
+                @Suppress("DEPRECATION")
+                val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                vibrator.cancel()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    // ============================================
+    // FOREGROUND WORKER NOTIFICATION
+    // ============================================
+
+    private const val RUNNING_CHANNEL_ID = "TimerRunningChannel"
+    private const val RUNNING_CHANNEL_NAME = "Đang đếm ngược"
+
+    private fun createRunningNotificationChannel(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                RUNNING_CHANNEL_ID,
+                RUNNING_CHANNEL_NAME,
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Hiển thị thời gian đếm ngược"
+                setSound(null, null)
+                enableVibration(false)
+            }
+            val manager = context.getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
+        }
+    }
+
+    /**
+     * Tạo Notification đếm ngược cho Foreground Worker
+     */
+    fun createForegroundNotification(context: Context, timerId: String, label: String, remainingSeconds: Long): android.app.Notification {
+        createRunningNotificationChannel(context)
+
+        val tapIntent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val tapPending = PendingIntent.getActivity(
+            context,
+            timerId.hashCode(),
+            tapIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val m = remainingSeconds / 60
+        val s = remainingSeconds % 60
+        val timeString = String.format("%02d:%02d", m, s)
+
+        return NotificationCompat.Builder(context, RUNNING_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setContentTitle("Hẹn giờ: $label")
+            .setContentText("Còn lại: $timeString")
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true) // Chỉ báo 1 lần tránh kêu liên tục
+            .setContentIntent(tapPending)
+            .build()
     }
 }
