@@ -41,21 +41,64 @@ class TimerViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             repository.getTimers().collect { items ->
-
+                // TODO: Load saved timers
             }
         }
-        // Cài đặt dữ liệu mẫu ban đầu (Mock Data)
+        
+        // Mock data ban đầu
         _uiState.update {
             it.copy(
                 timerList = listOf(
                     TimerItem("1", "4 min, 30 sec", 270, 264, true),
                     TimerItem("2", "10 min", 600, 576, true)
                 ),
-                activeTimerList = listOf(
-                    TimerItem("r1", "4 min, 30 sec", 270, 270, false),
-                    TimerItem("r2", "10 min", 600, 600, false)
-                )
+                activeTimerList = listOf()
             )
+        }
+
+        // Lắng nghe TẤT CẢ các Timer đang chạy dưới nền
+        viewModelScope.launch {
+            workManager.getWorkInfosByTagFlow(TimerCountdownWorker.WORK_TAG_TIMER)
+                .collect { workInfos ->
+                    _uiState.update { state ->
+                        var updatedList = state.timerList
+                        var updatedSelected = state.selectedTimer
+
+                        for (info in workInfos) {
+                            val timerId = info.tags.find { it.startsWith(TimerCountdownWorker.WORK_NAME_PREFIX) }
+                                ?.removePrefix(TimerCountdownWorker.WORK_NAME_PREFIX) ?: continue
+
+                            val remaining = info.progress.getLong(TimerCountdownWorker.KEY_REMAINING_SECONDS, -1L)
+                            
+                            if (info.state == WorkInfo.State.RUNNING && remaining >= 0) {
+                                // Cập nhật progress nếu đang chạy
+                                updatedList = updatedList.map {
+                                    if (it.id == timerId) it.copy(isRunning = true, remainingSeconds = remaining) else it
+                                }
+                                // Thêm vào list nếu chưa có (trường hợp mở lại app mất mock)
+                                if (updatedList.none { it.id == timerId }) {
+                                    val label = info.progress.getString(TimerCountdownWorker.KEY_TIMER_LABEL) ?: "Timer"
+                                    val total = info.progress.getLong(TimerCountdownWorker.KEY_TOTAL_SECONDS, remaining)
+                                    val newItem = TimerItem(timerId, label, total, remaining, true)
+                                    updatedList = updatedList + newItem
+                                }
+                                if (updatedSelected?.id == timerId) {
+                                    updatedSelected = updatedSelected.copy(isRunning = true, remainingSeconds = remaining)
+                                }
+                            } else if (info.state == WorkInfo.State.SUCCEEDED || info.state == WorkInfo.State.FAILED) {
+                                // Hết giờ hoặc lỗi
+                                updatedList = updatedList.map {
+                                    if (it.id == timerId) it.copy(isRunning = false, remainingSeconds = 0) else it
+                                }
+                                if (updatedSelected?.id == timerId) {
+                                    updatedSelected = updatedSelected.copy(isRunning = false, remainingSeconds = 0)
+                                }
+                            }
+                        }
+
+                        state.copy(timerList = updatedList, selectedTimer = updatedSelected)
+                    }
+                }
         }
     }
 
@@ -106,7 +149,6 @@ class TimerViewModel @Inject constructor(
 
         // Schedule WorkManager để gửi notification khi hết giờ
         scheduleTimerWork(newTimer.id, label, total)
-        observeWorkStatus(newTimer.id)
     }
 
     private fun toggleTimerStatus(id: String) {
@@ -127,7 +169,6 @@ class TimerViewModel @Inject constructor(
                     val remaining = item.remainingSeconds
                     if (remaining > 0) {
                         scheduleTimerWork(id, item.label, remaining)
-                        observeWorkStatus(id)
                     }
                 }
             }
@@ -148,40 +189,7 @@ class TimerViewModel @Inject constructor(
         }
     }
 
-    private fun observeWorkStatus(timerId: String) {
-        viewModelScope.launch {
-            workManager.getWorkInfosByTagFlow(TimerCountdownWorker.WORK_NAME_PREFIX + timerId)
-                .collect { workInfos ->
-                    val workInfo = workInfos.firstOrNull() ?: return@collect
-                    
-                    _uiState.update { state ->
-                        var updatedList = state.timerList
-                        var updatedSelected = state.selectedTimer
-
-                        if (workInfo.state == WorkInfo.State.RUNNING) {
-                            val remaining = workInfo.progress.getLong(TimerCountdownWorker.KEY_REMAINING_SECONDS, -1L)
-                            if (remaining >= 0) {
-                                updatedList = updatedList.map {
-                                    if (it.id == timerId) it.copy(isRunning = true, remainingSeconds = remaining) else it
-                                }
-                                if (updatedSelected?.id == timerId) {
-                                    updatedSelected = updatedSelected.copy(isRunning = true, remainingSeconds = remaining)
-                                }
-                            }
-                        } else if (workInfo.state == WorkInfo.State.SUCCEEDED || workInfo.state == WorkInfo.State.FAILED) {
-                            updatedList = updatedList.map {
-                                if (it.id == timerId) it.copy(isRunning = false, remainingSeconds = 0) else it
-                            }
-                            if (updatedSelected?.id == timerId) {
-                                updatedSelected = updatedSelected.copy(isRunning = false, remainingSeconds = 0)
-                            }
-                        }
-
-                        state.copy(timerList = updatedList, selectedTimer = updatedSelected)
-                    }
-                }
-        }
-    }
+    // Removed individual observeWorkStatus, using global observer in init
 
     // =============================================
     // WORKMANAGER INTEGRATION
@@ -197,6 +205,7 @@ class TimerViewModel @Inject constructor(
         val workRequest = OneTimeWorkRequestBuilder<TimerCountdownWorker>()
             .setInputData(workData)
             .addTag(TimerCountdownWorker.WORK_NAME_PREFIX + timerId)
+            .addTag(TimerCountdownWorker.WORK_TAG_TIMER)
             .build()
 
         workManager.enqueue(workRequest)

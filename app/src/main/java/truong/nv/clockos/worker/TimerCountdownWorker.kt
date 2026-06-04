@@ -29,6 +29,7 @@ class TimerCountdownWorker @AssistedInject constructor(
         const val KEY_TOTAL_SECONDS = "total_seconds"
         const val KEY_REMAINING_SECONDS = "remaining_seconds" // Progress output
         const val WORK_NAME_PREFIX = "timer_countdown_"
+        const val WORK_TAG_TIMER = "TIMER_WORKER_TAG"
     }
 
     override suspend fun doWork(): Result {
