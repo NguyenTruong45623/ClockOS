@@ -10,6 +10,7 @@ import dagger.hilt.components.SingletonComponent
 import truong.nv.clockos.data.AppDataBase
 import truong.nv.clockos.data.dao.StopWatchDao
 import truong.nv.clockos.data.dao.TimerDao
+import truong.nv.clockos.data.dao.AlarmDao
 import javax.inject.Singleton
 
 @Module
@@ -25,7 +26,9 @@ object AppModule {
             context,
             AppDataBase::class.java,
             "app_database"
-        ).build()
+        )
+        .fallbackToDestructiveMigration()
+        .build()
     }
 
     @Provides
@@ -40,6 +43,13 @@ object AppModule {
         appDataBase: AppDataBase
     ): StopWatchDao {
         return appDataBase.stopWatchDao()
+    }
+
+    @Provides
+    fun provideAlarmDao(
+        appDataBase: AppDataBase
+    ): AlarmDao {
+        return appDataBase.alarmDao()
     }
 
 }

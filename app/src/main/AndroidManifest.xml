@@ -35,8 +35,29 @@
                 android:value="Chạy đồng hồ đếm ngược và bấm giờ trên thanh thông báo" />
         </service>
 
+        <service
+            android:name=".service.AlarmRingingService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Phát chuông báo thức khi đến giờ" />
+        </service>
+
         <receiver android:name=".receiver.TimerReceiver" android:exported="false" />
         <receiver android:name=".receiver.StopAlarmReceiver" android:exported="false" />
+        <receiver android:name=".receiver.AlarmReceiver" android:exported="false" />
+        <receiver android:name=".receiver.AlarmActionReceiver" android:exported="false" />
+
+        <activity
+            android:name=".ui.feature.alarm.AlarmRingingActivity"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:theme="@style/Theme.ClockOS" />
 
         <activity
             android:name=".MainActivity"
