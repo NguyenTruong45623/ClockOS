@@ -30,12 +30,20 @@ fun WheelPicker2(
     startIndex: Int = 0,
     onItemSelected: (index: Int, item: String) -> Unit
 ) {
-    val listState = rememberLazyListState(initialFirstVisibleItemIndex = startIndex)
+    if (items.isEmpty()) return
+
+    val halfVisibleItems = visibleItemsCount / 2
+
+    // Tính toán index vô hạn để khi khởi tạo, item được chọn nằm chính giữa
+    val baseIndex = (Int.MAX_VALUE / 2) / items.size * items.size
+    val centerIndex = baseIndex + startIndex
+    val firstVisibleIndex = centerIndex - halfVisibleItems
+
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = firstVisibleIndex)
     val flingBehavior = rememberSnapFlingBehavior(lazyListState = listState)
 
     val density = LocalDensity.current
     val itemHeightPx = with(density) { itemHeight.toPx() }
-    val halfVisibleItems = visibleItemsCount / 2
 
     LaunchedEffect(listState.isScrollInProgress) {
         if (!listState.isScrollInProgress) {
@@ -48,10 +56,8 @@ fun WheelPicker2(
             }
 
             closestItem?.let {
-                val realIndex = it.index - halfVisibleItems
-                if (realIndex in items.indices) {
-                    onItemSelected(realIndex, items[realIndex])
-                }
+                val realIndex = it.index % items.size
+                onItemSelected(realIndex, items[realIndex])
             }
         }
     }
@@ -64,19 +70,16 @@ fun WheelPicker2(
             state = listState,
             flingBehavior = flingBehavior,
             modifier = Modifier.fillMaxSize()
+            // Bỏ contentPadding vì bây giờ list cuộn vô hạn, luôn có item bên trên và dưới
         ) {
-            // Thêm các item trống ở đầu
-            items(halfVisibleItems) {
-                Box(modifier = Modifier.height(itemHeight).fillMaxWidth())
-            }
-
-            items(items.size) { index ->
-                val item = items[index]
+            items(Int.MAX_VALUE) { index ->
+                val realIndex = index % items.size
+                val item = items[realIndex]
 
                 val alphaScaleRotation by remember {
                     derivedStateOf {
                         val layoutInfo = listState.layoutInfo
-                        val itemInfo = layoutInfo.visibleItemsInfo.firstOrNull { it.index == index + halfVisibleItems }
+                        val itemInfo = layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }
 
                         if (itemInfo == null) {
                             Triple(0.2f, 0.8f, 60f) // alpha, scale, rotationX
@@ -123,11 +126,6 @@ fun WheelPicker2(
                         color = Color.White
                     )
                 }
-            }
-
-            // Thêm các item trống ở cuối
-            items(halfVisibleItems) {
-                Box(modifier = Modifier.height(itemHeight).fillMaxWidth())
             }
         }
 
