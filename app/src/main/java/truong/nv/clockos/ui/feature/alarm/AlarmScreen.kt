@@ -33,6 +33,10 @@ import truong.nv.clockos.data.models.AlarmEntity
 import truong.nv.clockos.ui.components.WheelPicker
 import truong.nv.clockos.ui.navigation.AppNavigator
 import truong.nv.clockos.ui.theme.IosColor
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -183,108 +187,6 @@ fun AlarmScreen(
     }
 }
 
-@Composable
-fun AlarmRowItem(
-    alarm: AlarmEntity,
-    isEditMode: Boolean,
-    onToggle: () -> Unit,
-    onClick: () -> Unit,
-    onDelete: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(90.dp)
-            .clickable { onClick() },
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Red Minus Delete Button in Edit Mode
-        AnimatedVisibility(
-            visible = isEditMode,
-            enter = expandHorizontally(),
-            exit = shrinkHorizontally()
-        ) {
-            Box(
-                modifier = Modifier
-                    .padding(end = 12.dp)
-                    .size(24.dp)
-                    .clickable { onDelete() },
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.RemoveCircle,
-                    contentDescription = "Xóa",
-                    tint = Color.Red,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        }
-
-        // Time and Details
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center
-        ) {
-            Row(verticalAlignment = Alignment.Bottom) {
-                val amPmStr = if (alarm.hour < 12) "AM" else "PM"
-                val displayHour = when {
-                    alarm.hour == 0 -> 12
-                    alarm.hour > 12 -> alarm.hour - 12
-                    else -> alarm.hour
-                }
-                
-                Text(
-                    text = String.format("%02d:%02d", displayHour, alarm.minute),
-                    color = if (alarm.isEnabled && !isEditMode) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Light
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = amPmStr,
-                    color = if (alarm.isEnabled && !isEditMode) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                    fontSize = 18.sp,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-            }
-            
-            // Subtitle: Label and Repeat Schedule
-            val repeatStr = getRepeatSummary(alarm.repeatDays)
-            val subtitleText = if (alarm.label.isNotBlank() && alarm.label != "Báo thức") {
-                "${alarm.label}, $repeatStr"
-            } else {
-                repeatStr
-            }
-            
-            Text(
-                text = subtitleText,
-                color = if (alarm.isEnabled && !isEditMode) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                fontSize = 14.sp
-            )
-        }
-
-        // Switch or Chevron Right Icon
-        if (isEditMode) {
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = "Edit Detail",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
-                modifier = Modifier.size(24.dp)
-            )
-        } else {
-            Switch(
-                checked = alarm.isEnabled,
-                onCheckedChange = { onToggle() },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = IosColor.Green,
-                    uncheckedThumbColor = Color.White,
-                    uncheckedTrackColor = Color.DarkGray
-                )
-            )
-        }
-    }
-}
 
 @Composable
 fun AlarmEditDialog(
@@ -594,7 +496,7 @@ fun AlarmEditDialog(
     }
 }
 
-private fun getRepeatSummary(repeatDays: List<Int>): String {
+fun getRepeatSummary(repeatDays: List<Int>): String {
     if (repeatDays.isEmpty()) return "Chỉ một lần"
     if (repeatDays.size == 7) return "Hàng ngày"
     val isWeekdays = repeatDays.containsAll(listOf(1, 2, 3, 4, 5)) && repeatDays.size == 5

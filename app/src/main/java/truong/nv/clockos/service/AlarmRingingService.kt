@@ -25,7 +25,7 @@ import truong.nv.clockos.data.dao.AlarmDao
 import truong.nv.clockos.helper.AlarmScheduler
 import truong.nv.clockos.receiver.AlarmActionReceiver
 import truong.nv.clockos.receiver.AlarmReceiver
-import truong.nv.clockos.ui.feature.alarm.AlarmRingingActivity
+
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -34,6 +34,14 @@ class AlarmRingingService : Service() {
     companion object {
         const val CHANNEL_ID = "AlarmRingingChannel"
         const val NOTIFICATION_ID = 222
+        const val ACTION_SNOOZE = "ACTION_SNOOZE"
+        const val ACTION_DISMISS = "ACTION_DISMISS"
+        const val ACTION_RING = "ACTION_RING"
+        const val ALARM_ID = "ALARM_ID"
+        const val ALARM_HOUR = "ALARM_HOUR"
+        const val ALARM_MINUTE = "ALARM_MINUTE"
+        const val ALARM_LABEL = "ALARM_LABEL"
+        const val ALARM_SNOOZE_DURATION = "ALARM_SNOOZE_DURATION"
     }
 
     @Inject
@@ -51,11 +59,11 @@ class AlarmRingingService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = intent?.action
-        val alarmId = intent?.getIntExtra("ALARM_ID", -1) ?: -1
-        val hour = intent?.getIntExtra("ALARM_HOUR", 0) ?: 0
-        val minute = intent?.getIntExtra("ALARM_MINUTE", 0) ?: 0
-        val label = intent?.getStringExtra("ALARM_LABEL") ?: "Báo thức"
-        val snoozeDuration = intent?.getIntExtra("ALARM_SNOOZE_DURATION", 9) ?: 9
+        val alarmId = intent?.getIntExtra(ALARM_ID, -1) ?: -1
+        val hour = intent?.getIntExtra(ALARM_HOUR, 0) ?: 0
+        val minute = intent?.getIntExtra(ALARM_MINUTE, 0) ?: 0
+        val label = intent?.getStringExtra(ALARM_LABEL) ?: "Báo thức"
+        val snoozeDuration = intent?.getIntExtra(ALARM_SNOOZE_DURATION, 9) ?: 9
 
         Log.d("AlarmRingingService", "Service action: $action for Alarm ID: $alarmId, snooze: $snoozeDuration")
 
@@ -65,13 +73,13 @@ class AlarmRingingService : Service() {
         }
 
         when (action) {
-            "ACTION_RING" -> {
+            ACTION_RING -> {
                 startRinging(alarmId, hour, minute, label, snoozeDuration)
             }
-            "ACTION_SNOOZE" -> {
+            ACTION_SNOOZE -> {
                 snoozeAlarm(alarmId, hour, minute, label, snoozeDuration)
             }
-            "ACTION_DISMISS" -> {
+            ACTION_DISMISS -> {
                 dismissAlarm(alarmId)
             }
             else -> {
@@ -113,11 +121,11 @@ class AlarmRingingService : Service() {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         
         val intent = Intent(this, AlarmReceiver::class.java).apply {
-            putExtra("ALARM_ID", alarmId)
-            putExtra("ALARM_HOUR", hour)
-            putExtra("ALARM_MINUTE", minute)
-            putExtra("ALARM_LABEL", "$label (Snooze)")
-            putExtra("ALARM_SNOOZE_DURATION", snoozeDuration)
+            putExtra(ALARM_ID, alarmId)
+            putExtra(ALARM_HOUR, hour)
+            putExtra(ALARM_MINUTE, minute)
+            putExtra(ALARM_LABEL, "$label (Snooze)")
+            putExtra(ALARM_SNOOZE_DURATION, snoozeDuration)
         }
         
         val pendingIntent = PendingIntent.getBroadcast(
@@ -242,30 +250,14 @@ class AlarmRingingService : Service() {
     }
 
     private fun buildRingingNotification(alarmId: Int, hour: Int, minute: Int, label: String, snoozeDuration: Int): Notification {
-        // 1. Fullscreen intent to AlarmRingingActivity
-        val fullScreenIntent = Intent(this, AlarmRingingActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra("ALARM_ID", alarmId)
-            putExtra("ALARM_HOUR", hour)
-            putExtra("ALARM_MINUTE", minute)
-            putExtra("ALARM_LABEL", label)
-            putExtra("ALARM_SNOOZE_DURATION", snoozeDuration)
-        }
-        val fullScreenPendingIntent = PendingIntent.getActivity(
-            this,
-            alarmId,
-            fullScreenIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
 
         // 2. Action buttons PendingIntents
         val snoozeIntent = Intent(this, AlarmActionReceiver::class.java).apply {
-            action = "ACTION_SNOOZE"
-            putExtra("ALARM_ID", alarmId)
-            putExtra("ALARM_HOUR", hour)
-            putExtra("ALARM_MINUTE", minute)
-            putExtra("ALARM_LABEL", label)
-            putExtra("ALARM_SNOOZE_DURATION", snoozeDuration)
+            action = ACTION_SNOOZE
+            putExtra(ALARM_HOUR, hour)
+            putExtra(ALARM_MINUTE, minute)
+            putExtra(ALARM_LABEL, label)
+            putExtra(ALARM_SNOOZE_DURATION, snoozeDuration)
         }
         val snoozePending = PendingIntent.getBroadcast(
             this,
@@ -275,12 +267,12 @@ class AlarmRingingService : Service() {
         )
 
         val dismissIntent = Intent(this, AlarmActionReceiver::class.java).apply {
-            action = "ACTION_DISMISS"
-            putExtra("ALARM_ID", alarmId)
-            putExtra("ALARM_HOUR", hour)
-            putExtra("ALARM_MINUTE", minute)
-            putExtra("ALARM_LABEL", label)
-            putExtra("ALARM_SNOOZE_DURATION", snoozeDuration)
+            action = ACTION_DISMISS
+            putExtra(ALARM_ID, alarmId)
+            putExtra(ALARM_HOUR, hour)
+            putExtra(ALARM_MINUTE, minute)
+            putExtra(ALARM_LABEL, label)
+            putExtra(ALARM_SNOOZE_DURATION, snoozeDuration)
         }
         val dismissPending = PendingIntent.getBroadcast(
             this,
@@ -295,7 +287,6 @@ class AlarmRingingService : Service() {
             .setContentText(String.format("%02d:%02d", hour, minute))
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setFullScreenIntent(fullScreenPendingIntent, true)
             .setOngoing(true)
             .setAutoCancel(false)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

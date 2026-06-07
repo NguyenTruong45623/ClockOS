@@ -9,31 +9,31 @@ import truong.nv.clockos.service.AlarmRingingService
 class AlarmActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action ?: return
-        val alarmId = intent.getIntExtra("ALARM_ID", -1)
-        val hour = intent.getIntExtra("ALARM_HOUR", 0)
-        val minute = intent.getIntExtra("ALARM_MINUTE", 0)
-        val label = intent.getStringExtra("ALARM_LABEL") ?: "Báo thức"
-        val snoozeDuration = intent.getIntExtra("ALARM_SNOOZE_DURATION", 9)
+        val alarmId = intent.getIntExtra(AlarmRingingService.ALARM_ID, -1)
+        val hour = intent.getIntExtra(AlarmRingingService.ALARM_HOUR, 0)
+        val minute = intent.getIntExtra(AlarmRingingService.ALARM_MINUTE, 0)
+        val label = intent.getStringExtra(AlarmRingingService.ALARM_LABEL) ?: "Báo thức"
+        val snoozeDuration = intent.getIntExtra(AlarmRingingService.ALARM_SNOOZE_DURATION, 9)
 
         Log.d("AlarmActionReceiver", "Action received: $action for Alarm ID: $alarmId, snooze: $snoozeDuration")
 
         if (alarmId == -1) return
 
         val serviceIntent = Intent(context, AlarmRingingService::class.java).apply {
-            putExtra("ALARM_ID", alarmId)
-            putExtra("ALARM_HOUR", hour)
-            putExtra("ALARM_MINUTE", minute)
-            putExtra("ALARM_LABEL", label)
-            putExtra("ALARM_SNOOZE_DURATION", snoozeDuration)
+            putExtra(AlarmRingingService.ALARM_ID, alarmId)
+            putExtra(AlarmRingingService.ALARM_HOUR, hour)
+            putExtra(AlarmRingingService.ALARM_MINUTE, minute)
+            putExtra(AlarmRingingService.ALARM_LABEL, label)
+            putExtra(AlarmRingingService.ALARM_SNOOZE_DURATION, snoozeDuration)
         }
 
         when (action) {
-            "ACTION_SNOOZE" -> {
-                serviceIntent.action = "ACTION_SNOOZE"
+            AlarmRingingService.ACTION_SNOOZE -> {
+                serviceIntent.action = AlarmRingingService.ACTION_SNOOZE
                 context.startService(serviceIntent)
             }
-            "ACTION_DISMISS" -> {
-                serviceIntent.action = "ACTION_DISMISS"
+            AlarmRingingService.ACTION_DISMISS -> {
+                serviceIntent.action = AlarmRingingService.ACTION_DISMISS
                 context.startService(serviceIntent)
             }
         }
