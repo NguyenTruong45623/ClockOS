@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.absoluteValue
@@ -28,6 +29,7 @@ fun WheelPicker2(
     visibleItemsCount: Int = 5, // Nên là số lẻ
     itemHeight: Dp = 48.dp,
     startIndex: Int = 0,
+    sizeText: TextUnit = 22.sp,
     onItemSelected: (index: Int, item: String) -> Unit
 ) {
     if (items.isEmpty()) return
@@ -121,7 +123,7 @@ fun WheelPicker2(
                 ) {
                     Text(
                         text = item,
-                        fontSize = 22.sp,
+                        fontSize = sizeText,
                         fontWeight = if (alphaScaleRotation.first > 0.8f) FontWeight.Bold else FontWeight.Normal,
                         color = Color.White
                     )
@@ -157,7 +159,7 @@ fun WheelPicker2(
 )
 @Composable
 fun DemoScreen() {
-    val options = listOf("Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật")
+    val options = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "10")
     var selectedOption by remember { mutableStateOf(options.first()) }
 
     Column(
@@ -169,8 +171,8 @@ fun DemoScreen() {
 
         WheelPicker2(
             items = options,
-            visibleItemsCount = 5,
-            itemHeight = 50.dp,
+            visibleItemsCount = 7,
+            itemHeight = 30.dp,
             onItemSelected = { index, item ->
                 selectedOption = item
             }
