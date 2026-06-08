@@ -59,8 +59,9 @@ fun WorldClockScreen(
         WheelPicker2(
             values = values,
             visibleItemsCount = 9,
-            itemHeight = 40.dp,
-            startIndex = 0
+            itemHeight = 30.dp,
+            startIndex = 0,
+            textSize = 18.sp
         ) { _, item ->
             selected = item
         }
@@ -72,7 +73,13 @@ fun WorldClockScreen(
         }
 
         WheelPicker(
-            items = items
+            values = items,
+            visibleItemsCount = 9,
+            itemHeight = 40.dp,
+            startIndex = 0,
+            onItemSelected = { _, item ->
+                selected = item
+            }
         )
     }
 }

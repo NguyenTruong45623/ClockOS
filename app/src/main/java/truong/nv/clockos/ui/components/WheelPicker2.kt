@@ -18,6 +18,7 @@ import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.input.pointer.util.addPointerInputChange
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -48,6 +49,13 @@ fun WheelPicker2(
     itemHeight: Dp = 48.dp,
     startIndex: Int = 0,
     textSize: TextUnit = 22.sp,
+    velocityMultiplier: Float = 2.5f,
+    frictionMultiplier: Float = 0.5f,
+    snapEarlyThreshold: Float = 150f,
+    rotationXMax: Float = 85f,
+    scaleDownRatio: Float = 0.25f,
+    cameraDistanceDensity: Float = 6f,
+    curveMultiplier: Float = 0.6f, // Hệ số cong vật lý (kéo các item ở rìa gần nhau hơn)
     onItemSelected: (index: Int, item: String) -> Unit
 ) {
     if (values.isEmpty()) return
@@ -77,23 +85,20 @@ fun WheelPicker2(
             },
             onDragEnd = {
                 // Đảo dấu: kéo xuống (dragAmount > 0) = cuộn ngược (scrollPx giảm)
-                // Nhân 1.5f để tăng tốc độ khởi điểm của fling (nhạy hơn)
-                val velocity = -velocityTracker.calculateVelocity().y * 1.5f
+                val velocity = -velocityTracker.calculateVelocity().y * velocityMultiplier
 
                 scope.launch {
                     // Phase 1: Decay — momentum tự nhiên kiểu iOS
                     val decayJob = launch {
                         scrollPx.animateDecay(
                             initialVelocity = velocity,
-                            animationSpec = exponentialDecay(frictionMultiplier = 0.7f)
+                            animationSpec = exponentialDecay(frictionMultiplier = frictionMultiplier)
                         )
                     }
 
-                    // Liên tục theo dõi vận tốc, khi vòng quay chậm lại (dưới 150px/s),
-                    // lập tức dừng decay sớm để "hút" (snap) vào item gần nhất.
-                    // (Sớm hơn 1 xíu so với việc chờ dừng hẳn, nhưng không quá gắt)
+                    // Liên tục theo dõi vận tốc, khi vòng quay chậm lại, lập tức dừng decay sớm để "hút" (snap) vào item gần nhất.
                     while (decayJob.isActive) {
-                        if (scrollPx.velocity.absoluteValue < 150f && scrollPx.velocity.absoluteValue > 0f) {
+                        if (scrollPx.velocity.absoluteValue < snapEarlyThreshold && scrollPx.velocity.absoluteValue > 0f) {
                             decayJob.cancel()
                             break
                         }
@@ -109,7 +114,7 @@ fun WheelPicker2(
                         targetValue = snappedPx,
                         animationSpec = spring(
                             dampingRatio = Spring.DampingRatioNoBouncy,
-                            stiffness = Spring.StiffnessMedium 
+                            stiffness = Spring.StiffnessMedium
                         )
                     )
 
@@ -202,22 +207,29 @@ fun WheelPicker2(
                             val fraction = rawFraction.coerceIn(-1f, 1f)
                             val absFraction = fraction.absoluteValue
 
+                            // Cylinder Projection: Kéo các item ở xa tâm (rìa) xích lại gần tâm hơn
+                            // Tạo hiệu ứng cong thành cung tròn thật thay vì chỉ xoay phẳng
+                            val curveTranslationY =
+                                -(fraction * absFraction) * curveMultiplier * itemHeightPx
+
+                            // Dịch chuyển cuộn mượt + dịch chuyển cong 3D
+                            translationY = -fractional + curveTranslationY
+
                             // ── iOS UIPickerView Effects ──
 
                             // Alpha: giữa = 1.0, rìa = ~0.45 (mờ nhưng vẫn đọc được)
                             alpha = 1f - absFraction * 0.55f
 
                             // Cylinder 3D: xoay quanh trục X tạo hiệu ứng trống xoay
-                            // Tăng góc xoay lên 65 độ để thấy rõ độ cong của vòng tròn
-                            rotationX = fraction * 65f
+                            rotationX = fraction * rotationXMax
 
-                            // Tăng cường 3D: thu nhỏ dần item khi xa tâm
-                            val scale = 1f - absFraction * 0.15f
+                            // Tăng cường 3D: thu nhỏ item khi ra rìa
+                            val scale = 1f - absFraction * scaleDownRatio
                             scaleX = scale
                             scaleY = scale
 
-                            // Camera distance: giảm xuống 8f để tăng độ méo perspective (thấy rõ 3D hơn)
-                            cameraDistance = 8f * density.density
+                            // Camera distance: phối cảnh ống kính
+                            cameraDistance = cameraDistanceDensity * density.density
                         }
                     },
                 contentAlignment = Alignment.Center
@@ -245,4 +257,26 @@ fun WheelPicker2(
             HorizontalDivider(color = Color.Gray.copy(alpha = 0.25f), thickness = 0.8.dp)
         }
     }
+}
+
+@Preview(
+    showBackground = true,
+    backgroundColor = 0xFF1C1C1E
+)
+@Composable
+fun WheelPicker2Preview() {
+    val values =
+        (0..59).map {
+            it.toString().padStart(2, '0')
+        }
+    WheelPicker2(
+        values = values,
+        visibleItemsCount = 9,
+        itemHeight = 25.dp,
+        startIndex = 0,
+        textSize = 18.sp
+    ) { _, item ->
+        // Callback item đã chọn
+    }
+
 }
