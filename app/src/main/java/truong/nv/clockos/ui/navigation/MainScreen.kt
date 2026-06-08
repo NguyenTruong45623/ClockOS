@@ -43,7 +43,7 @@ enum class MainTab(val icon: ImageVector, val title: String) {
 fun MainScreen(
     navigator: AppNavigator,
 ) {
-    var currentTab by rememberSaveable { mutableStateOf(MainTab.Alarm) }
+    var currentTab by rememberSaveable { mutableStateOf(MainTab.WorldClock) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,

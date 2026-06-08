@@ -77,11 +77,11 @@ fun TimerSetupScreen(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                WheelPicker(items = (0..23).toList(), label = "giờ", onItemSelected = { selectedHour = it })
-                Spacer(modifier = Modifier.width(8.dp))
-                WheelPicker(items = (0..59).toList(), label = "phút", onItemSelected = { selectedMinute = it })
-                Spacer(modifier = Modifier.width(8.dp))
-                WheelPicker(items = (0..59).toList(), label = "giây", onItemSelected = { selectedSecond = it })
+//                WheelPicker(items = (0..23).toList(), label = "giờ", onItemSelected = { selectedHour = it })
+//                Spacer(modifier = Modifier.width(8.dp))
+//                WheelPicker(items = (0..59).toList(), label = "phút", onItemSelected = { selectedMinute = it })
+//                Spacer(modifier = Modifier.width(8.dp))
+//                WheelPicker(items = (0..59).toList(), label = "giây", onItemSelected = { selectedSecond = it })
             }
         }
 

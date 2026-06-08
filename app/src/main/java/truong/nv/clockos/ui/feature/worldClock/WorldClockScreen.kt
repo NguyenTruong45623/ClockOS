@@ -24,6 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import truong.nv.clockos.ui.components.WheelPicker
+import truong.nv.clockos.ui.components.WheelPicker2
 import truong.nv.clockos.ui.navigation.AppNavigator
 import truong.nv.clockos.ui.theme.IosColor
 
@@ -32,102 +34,46 @@ import truong.nv.clockos.ui.theme.IosColor
 fun WorldClockScreen(
     navigator: AppNavigator
 ) {
-    val listState = rememberLazyListState()
-    var showCitySheet by remember { mutableStateOf(false) }
-    
-    // Theo dõi: hiện title nhỏ trên topbar nếu cuộn qua dòng chữ "World Clock" to ở index 0
-    val showSmallTitle by remember {
-        derivedStateOf {
-            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 80
-        }
+    val values =
+    (0..59).map {
+        it.toString().padStart(2, '0')
     }
 
-    Scaffold(
-        containerColor = Color.Black,
-        topBar = {
-            CenterAlignedTopAppBar(
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color.Black,
-                    titleContentColor = Color.White
-                ),
-                title = {
-                    AnimatedVisibility(
-                        visible = showSmallTitle,
-                        enter = fadeIn() + slideInVertically(initialOffsetY = { 20 }),
-                        exit = fadeOut() + slideOutVertically(targetOffsetY = { 20 })
-                    ) {
-                        Text(
-                            text = "World Clock", 
-                            fontWeight = FontWeight.SemiBold, 
-                            fontSize = 17.sp
-                        )
-                    }
-                },
-                navigationIcon = {
-                    TextButton(onClick = { /* TODO: Edit */ }) {
-                        Text("Sửa", color = IosColor.Orange, fontSize = 17.sp)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { showCitySheet = true }) {
-                        Icon(
-                            imageVector = Icons.Default.Add,
-                            contentDescription = "Thêm",
-                            tint = IosColor.Orange
-                        )
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        LazyColumn(
-            state = listState,
-            contentPadding = paddingValues,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Big Title Item
-            item {
-                Text(
-                    text = "World Clock",
-                    fontSize = 34.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 16.dp)
-                )
-            }
-            
-            // Divider
-            item {
-                HorizontalDivider(color = Color.DarkGray, modifier = Modifier.padding(horizontal = 16.dp))
-            }
-
-            // Fake List
-            items(15) { index ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text("Hôm nay, +0GIỜ", color = Color.Gray, fontSize = 14.sp)
-                        Text("Thành phố ${index + 1}", color = Color.White, fontSize = 24.sp)
-                    }
-                    Text(
-                        text = "10:0$index", 
-                        color = Color.White, 
-                        fontSize = 40.sp,
-                        fontWeight = FontWeight.Light
-                    )
-                }
-                HorizontalDivider(color = Color.DarkGray, modifier = Modifier.padding(horizontal = 16.dp))
-            }
-        }
+    var selected by remember {
+        mutableStateOf(values.first())
     }
 
-    if (showCitySheet) {
-        CitySelectionSheet(onDismiss = { showCitySheet = false })
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+
+        Text(
+            text = "Selected: $selected",
+            color = Color.White
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        WheelPicker2(
+            values = values,
+            visibleItemsCount = 9,
+            itemHeight = 40.dp,
+            startIndex = 0
+        ) { _, item ->
+            selected = item
+        }
+
+        val items = remember {
+            List(1000) { index ->
+                "Item $index"
+            }
+        }
+
+        WheelPicker(
+            items = items
+        )
     }
 }
 

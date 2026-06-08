@@ -263,17 +263,17 @@ fun AlarmEditDialog(
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        WheelPicker(
-                            items = (0..23).toList(),
-                            label = "giờ",
-                            onItemSelected = { hour = it }
-                        )
-                        Spacer(modifier = Modifier.width(20.dp))
-                        WheelPicker(
-                            items = (0..59).toList(),
-                            label = "phút",
-                            onItemSelected = { minute = it }
-                        )
+//                        WheelPicker(
+//                            items = (0..23).toList(),
+//                            label = "giờ",
+//                            onItemSelected = { hour = it }
+//                        )
+//                        Spacer(modifier = Modifier.width(20.dp))
+//                        WheelPicker(
+//                            items = (0..59).toList(),
+//                            label = "phút",
+//                            onItemSelected = { minute = it }
+//                        )
                     }
                 }
 
