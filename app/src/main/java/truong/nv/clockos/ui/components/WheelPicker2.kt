@@ -1,5 +1,6 @@
 package truong.nv.clockos.ui.components
 
+import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
@@ -165,6 +166,7 @@ fun WheelPicker2(
         contentAlignment = Alignment.Center
     ) {
         repeat(totalSlots) { slot ->
+            Log.d("WheelPicker2", "WheelPicker2: $slot")
             // Vị trí slot so với tâm: -3, -2, -1, 0, 1, 2, 3 (cho 7 slots)
             val slotOffset = slot - halfSlots
 
