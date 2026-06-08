@@ -53,9 +53,9 @@ fun WheelPicker2(
     frictionMultiplier: Float = 0.5f,
     snapEarlyThreshold: Float = 150f,
     rotationXMax: Float = 85f,
-    scaleDownRatio: Float = 0.25f,
+    scaleDownRatio: Float = 0.5f,
     cameraDistanceDensity: Float = 6f,
-    curveMultiplier: Float = 0.6f, // Hệ số cong vật lý (kéo các item ở rìa gần nhau hơn)
+    curveMultiplier: Float = 1.8f, // Tăng mạnh hệ số cong để hút sát các item ở rìa vào
     onItemSelected: (index: Int, item: String) -> Unit
 ) {
     if (values.isEmpty()) return
@@ -272,7 +272,7 @@ fun WheelPicker2Preview() {
     WheelPicker2(
         values = values,
         visibleItemsCount = 9,
-        itemHeight = 25.dp,
+        itemHeight = 23.dp,
         startIndex = 0,
         textSize = 18.sp
     ) { _, item ->
